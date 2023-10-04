@@ -1,0 +1,22 @@
+body {
+  background-color: #edede9;
+}
+
+.App {
+  height: 100vh;
+  width: 85vw;
+  margin: auto;
+  padding: 1rem 2rem 0;
+}
+
+.map-form {
+  z-index: 10px;
+  background-color: #ffffff;
+}
+
+.google-map-container {
+  display: flex;
+  justify-items: center;
+  height: 75vh;
+  width: 100%;
+}
