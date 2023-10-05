@@ -8,19 +8,19 @@ import {
   IconButton,
   Input,
   SkeletonText,
-  Text,
   useRadioGroup,
 } from "@chakra-ui/react";
-import { FaTimes } from "react-icons/fa";
-
 import {
   Autocomplete,
   DirectionsRenderer,
   GoogleMap,
   useJsApiLoader,
 } from "@react-google-maps/api";
-import React, { useRef, useState } from "react";
+import { type } from "@testing-library/user-event/dist/type";
+import DirectionInfo from "component/directionInfo";
 import RadioCard from "component/radioCard";
+import React, { useRef, useState } from "react";
+import { FaTimes } from "react-icons/fa";
 
 const center = { lat: 48.8584, lng: 2.2945 };
 const zoom = 6;
@@ -31,10 +31,7 @@ function App() {
     libraries: ["places"],
   });
 
-  const [map, setMap] = useState(/** @type google.maps.Map */ (null));
   const [directionsResponse, setDirectionsResponse] = useState(null);
-  const [distance, setDistance] = useState("");
-  const [duration, setDuration] = useState("");
 
   /** @type React.MutableRefObject<HTMLInputElement> */
   const originRef = useRef();
@@ -43,13 +40,19 @@ function App() {
   const [travelMode, setTravelMode] = useState("TRANSIT");
 
   const { getRootProps, getRadioProps } = useRadioGroup({
-    name: "framework",
+    name: "travelMode",
     defaultValue: "TRANSIT",
-    onChange: setTravelMode,
+    onChange: handleTravelModeChange,
   });
 
   if (!isLoaded) {
     return <SkeletonText />;
+  }
+
+  async function handleTravelModeChange(value) {
+    console.log(value);
+    setTravelMode(value);
+    await calculateRoute();
   }
 
   const group = getRootProps();
@@ -62,9 +65,12 @@ function App() {
   ];
 
   async function calculateRoute() {
+    console.log("in calculateRoute");
     if (originRef.current.value === "" || destinationRef.current.value === "") {
+      console.log("in calculateRoute: empty");
       return;
     }
+    console.log("in calculateRoute: not empty");
     const directionsService = new google.maps.DirectionsService();
     const results = await directionsService.route({
       origin: originRef.current.value,
@@ -73,14 +79,11 @@ function App() {
       travelMode: travelMode,
     });
     setDirectionsResponse(results);
-    setDistance(results.routes[0].legs[0].distance.text);
-    setDuration(results.routes[0].legs[0].duration.text);
+    console.log("in calculateRoute: sucess : ", results);
   }
 
   function clearRoute() {
     setDirectionsResponse(null);
-    setDistance("");
-    setDuration("");
     originRef.current.value = "";
     destinationRef.current.value = "";
   }
@@ -99,7 +102,6 @@ function App() {
             mapTypeControl: false,
             fullscreenControl: false,
           }}
-          onLoad={(map) => setMap(map)}
         >
           {directionsResponse && (
             <DirectionsRenderer directions={directionsResponse} />
@@ -155,10 +157,11 @@ function App() {
             })}
           </HStack>
         </HStack>
-        <HStack spacing={4} mt={4} justifyContent="space-around">
-          <Text>Distance: {distance} </Text>
-          <Text>Durée: {duration} </Text>
-        </HStack>
+        {directionsResponse && (
+          <DirectionInfo
+            directionResponse={directionsResponse?.routes[0]?.legs[0]}
+          />
+        )}
       </Box>
     </Flex>
   );
